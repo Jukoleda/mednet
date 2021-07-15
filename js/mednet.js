@@ -26,6 +26,40 @@ function colorRec() {
     this.data;
 }
 
+class MedNode {
+    constructor(inputs, weights, bias){
+        this.inputs = inputs;
+        this.weights = weights;
+        this.bias = bias;
+    }
+
+    connect(MedNode) {
+        
+    }
+}
+
+function Percep() {
+    this.inputs;
+    this.weights;
+    this.bias;
+    this.output;
+    this.operate = () =>{ 
+        var calc = 0;
+        this.weights.forEach((item) => {
+            this.inputs.forEach((iitem) => {
+                calc += item * iitem;
+            });
+        });
+        calc += this.bias;
+        this.output = this.sigmoid(calc);
+        return calc;
+    };
+    this._operate = () => {
+
+    };
+    this.sigmoid = (x) => { return 1 / (1 + Math.exp(-x)) };
+    this._sigmoid = (x) => { return this.sigmoid(x) * (1 - this.sigmoid(x)) };
+}
 
 var pesos = {
     i1_h1: Math.random(),
