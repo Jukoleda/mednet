@@ -1,235 +1,238 @@
 window.onload = iniciar;
 
 
-function colorRec() {
-    this.sigmoid = (x) => { return 1 / (1 + Math.exp(-x)) };
-    this._sigmoid = (x) => { return this.sigmoid(x) * (1 - this.sigmoid(x)) };
-
-    this.pesos = {
-        i1_h1: 0, 
-        i2_h1: 0, 
-        i3_h1: 0,
-        bias_h1: 0,
-        i1_h2: 0,
-        i2_h2: 0,
-        i3_h2: 0,
-        bias_h2: 0,
-        i1_h3: 0,
-        i2_h3: 0,
-        i3_h3: 0,
-        bias_h3: 0,
-        h1_o1: 0,
-        h2_o1: 0,
-        h3_o1: 0,
-        bias_o1: 0,
-    };
-    this.data;
-}
 
 class MedNode {
-    constructor(inputs, weights, bias){
-        this.inputs = inputs;
-        this.weights = weights;
-        this.bias = bias;
-    }
+     constructor(bias = Math.random()){
+         this.bias = bias;
+         this.output = 0;
+         this.delta = 0;
+         this.default = {
+              input: 0,
+              weight: Math.random(),
+              output: 0,
+              delta: 0
+         };
+         this.inputs = Array();
+         this.weights = Array();
+     }
+     
+     sigmoid(x){
+          return 1 / (1 + Math.exp(-x));
+     }
 
-    connect(MedNode) {
+     _sigmoid(x) { 
+          return this.sigmoid(x) * (1 - this.sigmoid(x));
+     }
+
+
+
+     addInput(input, id) {
+          this.inputs.push(input);
+          this.weights.push(this.default.weight);
+     }
+     addInput(input) {
+          this.inputs.push(input);
+          this.weights.push(this.default.weight);
+     }
+
+     activate() {
+
+          this.output = 0;
+
+          for(var i = 0; i < this.inputs.length; i++)
+               this.output += this.inputs[i] * this.weights[i];
+          
+          this.output += this.bias; 
+
+          this.output = this.sigmoid(this.output);
+     }
+
+     _activate(target) {
+
+          var activation = 0;
+          var delta = 0;
+          
+          for(var i = 0; i < this.inputs.length; i++)
+               activation += this.inputs[i] * this.weights[i];
+          activation += this.bias; 
+
+          delta = target - this.sigmoid(activation);
+          delta = delta * this._sigmoid(delta);
+
+          for(var i = 0; i < this.inputs.length; i++)
+               this.weights[i] += this.inputs[i] * delta;
+          
+          this.bias += delta;
+          this.delta = delta;   
+     }
+
+     debug() {
+          var percep = {};
+          percep.inputs = this.inputs;
+          percep.weights = this.weights;
+          percep.bias = this.bias;
+          console.table(percep);
+     }
+
+ }
+ 
+
+class MedNet {
+     constructor(hidden, deep, output, dataset = {input: [], output: 0}){
+          this.inputs = Array();
+          this.hidden = Array();
+          this.outputs = Array();
+          this.dataset = dataset;
+
+          for(var i = 0; i < this.dataset.input.length; i ++){
+               this.inputs.push(new MedNode());
+               this.inputs[i].addInput(this.dataset.input[i]);
+          }
+          
+          for(var i = 0; i < deep; i++){
+               var tmp = Array();
+               for(var j = 0; j < hidden; j++){
+                    tmp.push(new MedNode());
+               }
+               this.hidden.push(tmp);
+          }
+          for(var i = 0; i < output; i ++){
+               this.outputs.push(new MedNode());
+          }
+
+     }
+
+     forward() {
+          this.inputs.forEach((item) => item.activate());
+          this.hidden[0].forEach((hidden) => 
+               this.inputs.forEach((input) => hidden.addInput(input.output)));
+          for(var i = 1; i < this.hidden.length; i++){
+               for(var j = 0; j < this.hidden[i].length; j++){
+                    this.hidden[i-1][j].activate();
+                    for(var k = 0; k < this.hidden[i].length; k++)
+                         this.hidden[i][k].addInput(this.hidden[i-1][j].output);
+               }
+          }
+          this.hidden[this.hidden.length -1].forEach((item) => this.outputs.forEach((out) =>{
+               item.activate();
+               out.addInput(item.output);
+          }));
+          
+          this.outputs.forEach((item) => item.activate());
+     }
+     
+     backward(target) {
+          this.outputs.forEach((item) => item.activate(target));
+          
+          if(this.hidden.length > 1){
+               this.hidden[this.hidden.length -1].forEach(
+                    (item) => this.outputs.forEach(
+                         (out) => item._activate(out.delta)
+                         ));
+               
+               for(var i = this.hidden.length - 2; i > 0; i--){
+                    for(var j = this.hidden[i].length; j > 0; j--){
+                         for(var k = this.hidden[i].length; k > 0; k--){
+                              this.hidden[i][j]._activate(this.hidden[i+1][k].delta);
+                         }
+                    }
+               }
+          }else{
+               this.hidden[0].forEach((hidden) => {
+                    this.outputs.forEach((output) => {
+                         hidden._activate(output.delta);
+                    })
+               });
+          }
+          this.hidden[0].forEach((hidden) => this.inputs.forEach((input) => input._activate(hidden.delta)));
+          
+     }
+
+     train(times = 1){
+          for(var i = 0; i < times; i++){
+               this.forward();
+          
+               this.backward(this.dataset.output);
+          }
+     }
+
+     setConfig(dataset = {weights: {inputs: [], hidden:[[]], outputs: []}, bias: {inputs: [], hidden:[[]], outputs: []}}) {
+
+        for(var i = 0; i < this.inputs.length; i++){
+            this.inputs[i].weight = weights.inputs[i];
+            this.inputs[i].bias = bias.inputs[i];
+        }
+        
+        for(var i = 0; i < this.hidden.length; i++){
+            for(var j = 0; j < this.hidden[i].length; j++){
+                this.hidden[i][j].weight = weights.hidden[i][j];
+                this.hidden[i][j].bias = bias.hidden[i][j];
+            }
+        }
+        
+        for(var i = 0; i < this.outputs.length; i++){
+            this.outputs[i].weight = weights.outputs[i];
+            this.outputs[i].bias = bias.outputs[i];
+        }
+
+     }
+
+     show(){
+          console.table(this.dataset);
+          console.log("inputs");
+          console.table(this.inputs);
+          console.log("hidden");
+          console.table(this.hidden[0]);
+          console.log("outputs");
+          console.table(this.outputs);
+     }
+    
+    getData(){
+        data = {};
+        data.weights = {};
+        data.bias = {};
+        data.weights.inputs = Array();
+        data.weights.hidden = Array();
+        data.weights.outputs = Array();
+        data.bias.outputs = Array();
+        data.bias.outputs = Array();
+        data.bias.outputs = Array();
+
+        this.inputs.forEach((item) => {
+            data.weights.inputs.push(item.weight);
+            data.bias.inputs.push(item.bias);
+        });
+
+        this.hidden.forEach((l) => {
+            var temp = Array();
+            var temp2 = Array();
+            l.forEach((p) => {
+                temp.push(p.weight);
+                temp2.push(p.bias);
+            });
+            data.weights.hidden.push(temp);
+            data.bias.hidden.push(temp);
+        });
+
+        this.outputs.forEach((item) => {
+            data.weights.outputs.push(item.weight);
+            data.bias.outputs.push(item.bias);
+        });
+    
+        return data;
         
     }
 }
 
-function Percep() {
-    this.inputs;
-    this.weights;
-    this.bias;
-    this.output;
-    this.operate = () =>{ 
-        var calc = 0;
-        this.weights.forEach((item) => {
-            this.inputs.forEach((iitem) => {
-                calc += item * iitem;
-            });
-        });
-        calc += this.bias;
-        this.output = this.sigmoid(calc);
-        return calc;
-    };
-    this._operate = () => {
 
-    };
-    this.sigmoid = (x) => { return 1 / (1 + Math.exp(-x)) };
-    this._sigmoid = (x) => { return this.sigmoid(x) * (1 - this.sigmoid(x)) };
-}
-
-var pesos = {
-    i1_h1: Math.random(),
-    i2_h1: Math.random(),
-    i3_h1: Math.random(),
-    bias_h1: Math.random(),
-
-    i1_h2: Math.random(),
-    i2_h2: Math.random(),
-    i3_h2: Math.random(),
-    bias_h2: Math.random(),
-
-    i1_h3: Math.random(),
-    i2_h3: Math.random(),
-    i3_h3: Math.random(),
-    bias_h3: Math.random(),
-
-    h1_o1: Math.random(),
-    h2_o1: Math.random(),
-    h3_o1: Math.random(),
-    bias_o1: Math.random(),
-
-};
-
-var data = [
-    { input: [1, 0, 0], output: 1 },
-    { input: [0.7, 0, 0], output: 1 }
-];
-
-function nn(i1, i2, i3) {
-
-    var h1_inputs =
-        pesos.i1_h1 * i1 +
-        pesos.i2_h1 * i2 +
-        pesos.i3_h1 * i3 +
-        pesos.bias_h1;
-
-    var h1 = sigmoid(h1_inputs);
-
-    var h2_inputs =
-        pesos.i1_h2 * i1 +
-        pesos.i2_h2 * i2 +
-        pesos.i3_h2 * i3 +
-        pesos.bias_h2;
-
-    var h2 = sigmoid(h2_inputs);
-
-    var h3_inputs =
-        pesos.i1_h3 * i1 +
-        pesos.i2_h3 * i2 +
-        pesos.i3_h3 * i3 +
-        pesos.bias_h3;
-
-    var h3 = sigmoid(h3_inputs);
-
-    var o1_inputs =
-        pesos.h1_o1 * h1 +
-        pesos.h2_o1 * h2 +
-        pesos.h3_o1 * h3 +
-        pesos.bias_o1;
-
-    var o1 = sigmoid(o1_inputs);
-
-
-    return o1;
-}
-
-var outputResults = () =>
-    data.forEach(({ input: [i1, i2, i3], output: y }) =>
-        console.log(`[R:${i1}, G:${i2}, B:${i3}] => ${nn(i1, i2, i3)} (expected ${y})`));
-
-var train = () => {
-    const weight_deltas = {
-        i1_h1: 0,
-        i2_h1: 0,
-        i3_h1: 0,
-        bias_h1: 0,
-        i1_h2: 0,
-        i2_h2: 0,
-        i3_h2: 0,
-        bias_h2: 0,
-        i1_h3: 0,
-        i2_h3: 0,
-        i3_h3: 0,
-        bias_h3: 0,
-        h1_o1: 0,
-        h2_o1: 0,
-        h3_o1: 0,
-        bias_o1: 0,
-    };
-
-    for (var { input: [i1, i2, i3], output } of data) {
-
-        var h1_inputs =
-            pesos.i1_h1 * i1 +
-            pesos.i2_h1 * i2 +
-            pesos.i3_h1 * i3 +
-            pesos.bias_h1;
-
-        var h1 = sigmoid(h1_inputs);
-
-        var h2_inputs =
-            pesos.i1_h2 * i1 +
-            pesos.i2_h2 * i2 +
-            pesos.i3_h2 * i3 +
-            pesos.bias_h2;
-
-        var h2 = sigmoid(h2_inputs);
-
-        var h3_inputs =
-            pesos.i1_h3 * i1 +
-            pesos.i2_h3 * i2 +
-            pesos.i3_h3 * i3 +
-            pesos.bias_h3;
-
-        var h3 = sigmoid(h3_inputs);
-
-        var o1_inputs =
-            pesos.h1_o1 * h1 +
-            pesos.h2_o1 * h2 +
-            pesos.h3_o1 * h3 +
-            pesos.bias_o1;
-
-        var o1 = sigmoid(o1_inputs);
-
-
-        var delta = output - o1;
-        var o1_delta = delta * _sigmoid(o1_inputs);
-
-        weight_deltas.h1_o1 += h1 * o1_delta;
-        weight_deltas.h2_o1 += h2 * o1_delta;
-        weight_deltas.h3_o1 += h3 * o1_delta;
-        weight_deltas.bias_o1 += o1_delta;
-
-        var h1_delta = o1_delta * _sigmoid(h1_inputs);
-        var h2_delta = o1_delta * _sigmoid(h2_inputs);
-        var h3_delta = o1_delta * _sigmoid(h3_inputs);
-
-        weight_deltas.i1_h1 += i1 * h1_delta;
-        weight_deltas.i2_h1 += i2 * h1_delta;
-        weight_deltas.i3_h1 += i3 * h1_delta;
-        weight_deltas.bias_h1 += h1_delta;
-
-        weight_deltas.i1_h2 += i1 * h2_delta;
-        weight_deltas.i2_h2 += i2 * h2_delta;
-        weight_deltas.i3_h2 += i3 * h2_delta;
-        weight_deltas.bias_h2 += h2_delta;
-
-        weight_deltas.i1_h3 += i1 * h3_delta;
-        weight_deltas.i2_h3 += i2 * h3_delta;
-        weight_deltas.i3_h3 += i3 * h3_delta;
-        weight_deltas.bias_h3 += h3_delta;
-    }
-
-    return weight_deltas;
-}
-
-
-var applyTrainUpdate = (weight_deltas = train()) =>
-    Object.keys(pesos).forEach(key =>
-        pesos[key] += weight_deltas[key]);
 
 
 function iniciar() {
+    
+    var net = new MedNet(2, 1, 1, {input: [1, 1, 1], output: 1});
+    net.train(1000);
+    net.show();
 
-    for (var i = 0; i < 1000; i++) {
-        applyTrainUpdate();
-    }
-    console.log(pesos);
-    outputResults();
-
-
+    
 }
