@@ -4,14 +4,26 @@ window.onload = iniciar;
 this.sigmoid = (x) => { return 1 / (1 + Math.exp(-x)) };
 this._sigmoid = (x) => { return this.sigmoid(x) * (1 - this.sigmoid(x)) };
 
+class MedNode {
+     constructor(){
+          this.bias = Math.random();
+          this.weights = new Array();
+          this.output = 0.0; 
+          this.sum = 0.0; 
+          this.dbias = 0.0;
+          this.dweights = new Array();
+          this.doutput = 0.0;
+          this.dsum = 0.0;
+     }
+}
+
 class MedNet {
      constructor(structure = [2, 3, 2, 1], learning_rate = 0.15){
 
           this.layers = new Array();
-
           this.learning_rate = learning_rate;
 
-          var i,j;
+          var i,j,k;
 
           //inputs
           for(i = 0; i < structure.length; i ++){
@@ -19,7 +31,15 @@ class MedNet {
                this.layers[i] = new Array();
 
                for(j = 0; j < structure[i]; j++){
-                    this.layers[i][j] = {bias: Math.random(), weights: [], otuput:0, sum: 0, dbias: 0, dweights: [], doutput: 0, dsum: 0};
+                    this.layers[i][j] = new MedNode();
+                    if(i > 0){
+                         for(k = 0; k < structure[i-1]; k ++){
+                              this.layers[i][j].weights[k] = Math.random();
+                         }
+                    }
+                    if(i == 0){
+                         this.layers[i][j].weights[0] = Math.random();
+                    }
                }
           }
           
@@ -36,29 +56,31 @@ class MedNet {
      }
 
      forward(){
-          var i,j,k,context, ik;
-          ik = this.inputs;
-          context = this;
+          var i,j,k,r;
 
-          this.inputs.forEach((item) => {
-
-               
-               for(i = 0; i < context.layers[0].length; i++){
-                    context.layers[0][i].sum = context.layers[0][i].bias;
-                    context.layers[0][i].sum = context.layers[0][i].sum + (context.layers[0][j].weights[0] * item[i]);
-                    context.layers[0][i].output = (1 / (1 + Math.exp( - context.layers[i][j].sum)));
+          console.log(this.layers[0][0]);
+          for(r = 0; r < this.inputs.length; r++){
+               for(i = 0; i < this.layers[0].length; i++){
+                    this.layers[0][i].sum = this.layers[0][i].bias;
+                    this.layers[0][i].sum = this.layers[0][i].sum + (this.layers[0][i].weights[0] * this.inputs[r]);
+                    this.layers[0][i].output = (1 / (1 + Math.exp( - this.layers[0][i].sum)));
                }
 
-               for(i = 1; i < context.layers.length; i++){
-                    for(j = 0; j < context.layers[i].length; j++){
-                         context.layers[i][j].sum = context.layers[i][j].bias;
-                         for(k = 0; k < context.layers[i-1]; k++){
-                              context.layers[i][j].sum = context.layers[i][j].sum + (context.layers[i-1][k].output * context.layers[i][j].weights[k]);
+               for(i = 1; i < this.layers.length; i++){
+                    for(j = 0; j < this.layers[i].length; j++){
+                         this.layers[i][j].sum = this.layers[i][j].bias;
+                         for(k = 0; k < this.layers[i-1]; k++){
+                              this.layers[i][j].sum = this.layers[i][j].sum + (this.layers[i-1][k].output * this.layers[i][j].weights[k]);
                          }
-                         context.layers[i][j].otuput = (1 / (1 + Math.exp( - context.layers[i][j].sum)));
+                         this.layers[i][j].output = (1 / (1 + Math.exp( - this.layers[i][j].sum)));
                     }
                }
-          });
+          }
+
+          //console.log(this.layers[0][0].output)
+          //console.log(this.layers[0][0].weights)
+          //console.log(this.layers[0][0])
+
      }
 
      backward(){
@@ -67,7 +89,7 @@ class MedNet {
           context = this;
           lc = context.layers[context.layers.length - 1];
 
-          this.outputs.forEach((item) => {
+          this.targets.forEach((item) => {
                
                for(i = 0; i < context.layers[context.layers.length - 1].length; i++){
                     //dsum es delta
@@ -114,6 +136,31 @@ class MedNet {
           }
 
 
+     }
+
+     train(times = 1){
+          for(var i = 0; i < times; i++){
+               this.forward();
+               this.backward();
+               this.update();
+          }
+     }
+
+     output(){
+          var output = {}
+          output.inputs = this.inputs;
+          output.outputs = new Array(); 
+          
+          for(var i = 0; i < this.layers[this.layers.length - 1].length; i++){
+               output.outputs[i] = this.layers[this.layers.length - 1][i].output;
+          }
+
+          console.table(output);
+     }
+
+     run(){
+          this.forward();
+          //this.output();
      }
 }
 /*
@@ -264,6 +311,12 @@ function iniciar() {
     net.train(1);
     net.show();*/
 
-    var net = new MedNet();
+     var net = new MedNet([2,3,2,1], 0.15);
+     net.setData([
+          {inputs: [0, 0], outputs: [1]}
+     ]);
+     //net.train();
+     net.run();
+
     
 }
