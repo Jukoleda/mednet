@@ -58,11 +58,13 @@ class MedNet {
      forward(){
           var i,j,k,r;
 
-          console.log(this.layers[0][0]);
           for(r = 0; r < this.inputs.length; r++){
                for(i = 0; i < this.layers[0].length; i++){
                     this.layers[0][i].sum = this.layers[0][i].bias;
-                    this.layers[0][i].sum = this.layers[0][i].sum + (this.layers[0][i].weights[0] * this.inputs[r]);
+                    
+                    //console.log(this.inputs[r][i]);
+                    this.layers[0][i].sum = this.layers[0][i].sum + (this.layers[0][i].weights[0] * this.inputs[r][i]); //aca esta el problema
+                    // console.log(this.layers[0][i].sum, this.layers[0][i], i);
                     this.layers[0][i].output = (1 / (1 + Math.exp( - this.layers[0][i].sum)));
                }
 
@@ -149,6 +151,7 @@ class MedNet {
      output(){
           var output = {}
           output.inputs = this.inputs;
+          output.targets = this.targets;
           output.outputs = new Array(); 
           
           for(var i = 0; i < this.layers[this.layers.length - 1].length; i++){
@@ -315,8 +318,8 @@ function iniciar() {
      net.setData([
           {inputs: [0, 0], outputs: [1]}
      ]);
-     //net.train();
+     net.train(100000);
      net.run();
-
+     net.output();
     
 }
