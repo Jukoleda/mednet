@@ -1,4 +1,4 @@
-window.onload = iniciar;
+//window.onload = iniciar;
 
 // evals = [{inputs: [0,0], output: 0}]
 this.sigmoid = (x) => { return 1 / (1 + Math.exp(-x)) };
@@ -35,10 +35,12 @@ class MedNet {
                     if(i > 0){
                          for(k = 0; k < structure[i-1]; k ++){
                               this.layers[i][j].weights[k] = Math.random();
+                              this.layers[i][j].dweights[k] = Math.random();
                          }
                     }
                     if(i == 0){
                          this.layers[i][j].weights[0] = Math.random();
+                         this.layers[i][j].dweights[0] = Math.random();
                     }
                }
           }
@@ -55,6 +57,10 @@ class MedNet {
           });
      }
 
+     getConfig(){
+          
+     }
+
      forward(){
           var i,j,k,r;
 
@@ -62,22 +68,25 @@ class MedNet {
                for(i = 0; i < this.layers[0].length; i++){
                     this.layers[0][i].sum = this.layers[0][i].bias;
                     
-                    //console.log(this.inputs[r][i]);
-                    this.layers[0][i].sum = this.layers[0][i].sum + (this.layers[0][i].weights[0] * this.inputs[r][i]); //aca esta el problema
+                    // console.log(this.inputs[r][i]);
+                    this.layers[0][i].sum = parseFloat(this.layers[0][i].sum + (this.layers[0][i].weights[0] * this.inputs[r][i])); //aca esta el problema
                     // console.log(this.layers[0][i].sum, this.layers[0][i], i);
-                    this.layers[0][i].output = (1 / (1 + Math.exp( - this.layers[0][i].sum)));
+                    // console.log(this.layers[0][i].sum, this.layers[0][i].sum + (this.layers[0][i].weights[0] * this.inputs[r][i]));
+                    this.layers[0][i].output = parseFloat(1 / (1 + Math.exp( - this.layers[0][i].sum)));
+                    
                }
-
+               
                for(i = 1; i < this.layers.length; i++){
                     for(j = 0; j < this.layers[i].length; j++){
                          this.layers[i][j].sum = this.layers[i][j].bias;
                          for(k = 0; k < this.layers[i-1]; k++){
-                              this.layers[i][j].sum = this.layers[i][j].sum + (this.layers[i-1][k].output * this.layers[i][j].weights[k]);
+                              this.layers[i][j].sum = parseFloat(this.layers[i][j].sum + (this.layers[i-1][k].output * this.layers[i][j].weights[k]));
                          }
-                         this.layers[i][j].output = (1 / (1 + Math.exp( - this.layers[i][j].sum)));
+                         this.layers[i][j].output = parseFloat(1 / (1 + Math.exp( - this.layers[i][j].sum)));
                     }
                }
           }
+          //console.log("THIS",JSON.stringify(this));
 
           //console.log(this.layers[0][0].output)
           //console.log(this.layers[0][0].weights)
@@ -86,31 +95,31 @@ class MedNet {
      }
 
      backward(){
-          var i,j,k,context, ik, lc;
-          ik = this.inputs;
-          context = this;
-          lc = context.layers[context.layers.length - 1];
+          var i,j,k,r,l;
 
-          this.targets.forEach((item) => {
-               
-               for(i = 0; i < context.layers[context.layers.length - 1].length; i++){
+          for(r = 0; r < this.targets.length; r++){
+  
+               for(i = 0; i < this.layers[this.layers.length - 1].length; i++){
                     //dsum es delta
                     //delta =  output - o1 * o1 * (1 - o1);
 
-                    context.layers[context.layers.length - 1][i].dsum = (context.layers[context.layers.length - 1][i].output - item[i]) * context.layers[context.layers.length - 1][i].output * (1 - context.layers[context.layers.length - 1][i].output);
+                    this.layers[this.layers.length - 1][i].dsum = parseFloat((this.layers[this.layers.length - 1][i].output - this.targets[r][i]) * this.layers[this.layers.length - 1][i].output * (1 - this.layers[this.layers.length - 1][i].output));
                }
 
-               for(i = context.layers.length - 2; i > 0; i--){
-                    for(j = 0; j < context.layers[i].length; j++){
-                         for(k = 0; k < context.layers[i][j].dweights.length; k++){
+               for(i = this.layers.length - 2; i > 0; i--){
+                    for(j = 0; j < this.layers[i].length; j++){
+                         for(l = 0; l < this.layers[i+1].length; l++){
 
-                              context.layers[i+1][j].dweights[k] = context.layers[i+1][j].dsum * context.layers[i][j].output;
-                              context.layers[i][j].doutput = context.layers[i+1][j].weights[k] * context.layers[i+1][j].dsum;
-
+                              for(k = 0; k < this.layers[i+1][l].dweights.length; k++){
+                                   
+                                   this.layers[i+1][l].dweights[k] = parseFloat(this.layers[i+1][l].dsum * this.layers[i][j].output);
+                                   this.layers[i][j].doutput = parseFloat(this.layers[i+1][l].weights[k] * this.layers[i+1][l].dsum);
+                                   
+                              }
                          }
-                         context.layers[i][j].dbias = context.layers[i][j].dsum;
+                         this.layers[i][j].dbias = this.layers[i][j].dsum;
 
-                         context.layers[i][j].dsum = context.layers[i][j].doutput;
+                         this.layers[i][j].dsum = this.layers[i][j].doutput;
 
                         //se multiplica delta * output
                         //dw = output * delta
@@ -121,8 +130,10 @@ class MedNet {
 
                     }
                }
+          }
+          // console.log("<<<<<<<<<<<<<< THIS >>>>>>>>>>>>> ",JSON.stringify(this));
 
-          });
+         
      }
 
      update(){
@@ -130,10 +141,12 @@ class MedNet {
 
           for(i = 0; i < this.layers.length; i++){
                for(j = 0; j < this.layers[i].length; j++){
-                    for(k = 0; k < this.layers[i][j].weights.length; k++){
-                         this.layers[i][j].weights[k] = this.layers[i][j].weights[k] - (this.learning_rate * this.layers[i][j].dweights[k]);
+                    for(k = 0; k < this.layers[i][j].dweights.length; k++){
+                         let pretmp = parseFloat(this.learning_rate * this.layers[i][j].dweights[k]);
+                         let tmp = parseFloat(this.layers[i][j].weights[k] - pretmp);
+                         this.layers[i][j].weights[k] = tmp;
                     }
-                    this.layers[i][j].bias = this.layers[i][j].bias - (this.learning_rate * this.layers[i][j].dbias);
+                    this.layers[i][j].bias = (this.layers[i][j].bias - (this.learning_rate * this.layers[i][j].dbias));
                }
           }
 
@@ -145,6 +158,7 @@ class MedNet {
                this.forward();
                this.backward();
                this.update();
+               console.log(this.layers[this.layers.length - 1][0].output);
           }
      }
 
@@ -316,10 +330,15 @@ function iniciar() {
 
      var net = new MedNet([2,3,2,1], 0.15);
      net.setData([
-          {inputs: [0, 0], outputs: [1]}
+          {inputs: [0, 0], outputs: [0]}
      ]);
-     net.train(100000);
-     net.run();
-     net.output();
+     // net.forward();
+     // net.output();
+     //console.log(JSON.stringify(net));
+     net.train(1000);
+     // console.log(JSON.stringify(net));
+     // net.output();
     
 }
+
+iniciar();
