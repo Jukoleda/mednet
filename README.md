@@ -14,3 +14,5 @@ https://dannjs.org/
 https://towardsdatascience.com/creating-a-neural-network-from-scratch-302e8fb61703
 
 https://runkit.com/jabher/neural-network-from-scratch-in-js
+
+https://www.youtube.com/watch?v=Ilg3gGewQ5U

@@ -218,14 +218,12 @@ class MedNet {
         }
     }
 
+function iniciar() {
 
 for (var { input: [i1, i2, i3], output } of data) {
 
      var h1_inputs =
          pesos.i1_h1 * i1 +
-
- function iniciar() {
-
          pesos.i2_h1 * i2 +
          pesos.i3_h1 * i3 +
          pesos.bias_h1;
