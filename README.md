@@ -16,3 +16,15 @@ https://towardsdatascience.com/creating-a-neural-network-from-scratch-302e8fb617
 https://runkit.com/jabher/neural-network-from-scratch-in-js
 
 https://www.youtube.com/watch?v=Ilg3gGewQ5U
+
+
+https://github.com/hawkgs/genetic-algorithm-demo/blob/master/index.js
+https://www.thisdot.co/blog/quick-intro-to-genetic-algorithms-with-a-javascript-example
+.-.-.-.-.-.-.-.-.-.-.
+https://dev.to/lukegarrigan/genetic-algorithms-in-javascript-mc3
+https://bl.ocks.org/clemsos/09cf17a89ae2e7762df30a68004b4433
+.-.-.-.-.-.-.-.-.-.-.
+https://github.com/subprotocol/genetic-js
+https://subprotocol.com/system/genetic-hello-world.html
+.-.-.-.
+https://www.codeproject.com/Articles/1127321/Genetic-algorithm-an-implementation-using-JavaScri
