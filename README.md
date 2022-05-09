@@ -16,7 +16,7 @@ https://towardsdatascience.com/creating-a-neural-network-from-scratch-302e8fb617
 https://runkit.com/jabher/neural-network-from-scratch-in-js
 
 https://www.youtube.com/watch?v=Ilg3gGewQ5U
-
+https://mattmazur.com/2015/03/17/a-step-by-step-backpropagation-example/
 
 https://github.com/hawkgs/genetic-algorithm-demo/blob/master/index.js
 https://www.thisdot.co/blog/quick-intro-to-genetic-algorithms-with-a-javascript-example
