@@ -1,325 +1,343 @@
 window.onload = iniciar;
 
-// evals = [{inputs: [0,0], output: 0}]
-this.sigmoid = (x) => { return 1 / (1 + Math.exp(-x)) };
-this._sigmoid = (x) => { return this.sigmoid(x) * (1 - this.sigmoid(x)) };
-
 class MedNode {
-     constructor(){
-          this.bias = Math.random();
-          this.weights = new Array();
-          this.output = 0.0; 
-          this.sum = 0.0; 
-          this.dbias = 0.0;
-          this.dweights = new Array();
-          this.doutput = 0.0;
-          this.dsum = 0.0;
-     }
+  constructor() {
+    this.bias = Math.random();
+    this.weights = [];
+    this.output = 0.0;
+    this.sum = 0.0;
+    this.dbias = 0.0;
+    this.dweights = [];
+    this.doutput = 0.0;
+    this.dsum = 0.0;
+  }
 }
 
 class MedNet {
-     constructor(structure = [2, 3, 2, 1], learning_rate = 0.15){
-
-          this.layers = new Array();
-          this.learning_rate = learning_rate;
-
-          var i,j,k;
-
-          //inputs
-          for(i = 0; i < structure.length; i ++){
-               
-               this.layers[i] = new Array();
-
-               for(j = 0; j < structure[i]; j++){
-                    this.layers[i][j] = new MedNode();
-                    if(i > 0){
-                         for(k = 0; k < structure[i-1]; k ++){
-                              this.layers[i][j].weights[k] = Math.random();
-                         }
-                    }
-                    if(i == 0){
-                         this.layers[i][j].weights[0] = Math.random();
-                    }
-               }
-          }
-          
-     }
-
-     setData(dataset = [{inputs: [0, 0], outputs: [0]}]){
-          this.inputs = new Array();
-          this.targets = new Array();
-
-          dataset.forEach((item, index) => {
-               this.inputs[index] = item.inputs;
-               this.targets[index] = item.outputs;
-          });
-     }
-
-     forward(){
-          var i,j,k,r;
-
-          for(r = 0; r < this.inputs.length; r++){
-               for(i = 0; i < this.layers[0].length; i++){
-                    this.layers[0][i].sum = this.layers[0][i].bias;
-                    
-                    //console.log(this.inputs[r][i]);
-                    this.layers[0][i].sum = this.layers[0][i].sum + (this.layers[0][i].weights[0] * this.inputs[r][i]); //aca esta el problema
-                    // console.log(this.layers[0][i].sum, this.layers[0][i], i);
-                    this.layers[0][i].output = (1 / (1 + Math.exp( - this.layers[0][i].sum)));
-               }
-
-               for(i = 1; i < this.layers.length; i++){
-                    for(j = 0; j < this.layers[i].length; j++){
-                         this.layers[i][j].sum = this.layers[i][j].bias;
-                         for(k = 0; k < this.layers[i-1]; k++){
-                              this.layers[i][j].sum = this.layers[i][j].sum + (this.layers[i-1][k].output * this.layers[i][j].weights[k]);
-                         }
-                         this.layers[i][j].output = (1 / (1 + Math.exp( - this.layers[i][j].sum)));
-                    }
-               }
-          }
-
-          //console.log(this.layers[0][0].output)
-          //console.log(this.layers[0][0].weights)
-          //console.log(this.layers[0][0])
-
-     }
-
-     backward(){
-          var i,j,k,context, ik, lc;
-          ik = this.inputs;
-          context = this;
-          lc = context.layers[context.layers.length - 1];
-
-          this.targets.forEach((item) => {
-               
-               for(i = 0; i < context.layers[context.layers.length - 1].length; i++){
-                    //dsum es delta
-                    //delta =  output - o1 * o1 * (1 - o1);
-
-                    context.layers[context.layers.length - 1][i].dsum = (context.layers[context.layers.length - 1][i].output - item[i]) * context.layers[context.layers.length - 1][i].output * (1 - context.layers[context.layers.length - 1][i].output);
-               }
-
-               for(i = context.layers.length - 2; i > 0; i--){
-                    for(j = 0; j < context.layers[i].length; j++){
-                         for(k = 0; k < context.layers[i][j].dweights.length; k++){
-
-                              context.layers[i+1][j].dweights[k] = context.layers[i+1][j].dsum * context.layers[i][j].output;
-                              context.layers[i][j].doutput = context.layers[i+1][j].weights[k] * context.layers[i+1][j].dsum;
-
-                         }
-                         context.layers[i][j].dbias = context.layers[i][j].dsum;
-
-                         context.layers[i][j].dsum = context.layers[i][j].doutput;
-
-                        //se multiplica delta * output
-                        //dw = output * delta
-                        //doutput = peso * delta
-                        //dbias  = delta
-                    
-                        //var h1_delta = o1_delta * (output * (1 - output))
-
-                    }
-               }
-
-          });
-     }
-
-     update(){
-          var i,j,k;
-
-          for(i = 0; i < this.layers.length; i++){
-               for(j = 0; j < this.layers[i].length; j++){
-                    for(k = 0; k < this.layers[i][j].weights.length; k++){
-                         this.layers[i][j].weights[k] = this.layers[i][j].weights[k] - (this.learning_rate * this.layers[i][j].dweights[k]);
-                    }
-                    this.layers[i][j].bias = this.layers[i][j].bias - (this.learning_rate * this.layers[i][j].dbias);
-               }
-          }
-
-
-     }
-
-     train(times = 1){
-          for(var i = 0; i < times; i++){
-               this.forward();
-               this.backward();
-               this.update();
-          }
-     }
-
-     output(){
-          var output = {}
-          output.inputs = this.inputs;
-          output.targets = this.targets;
-          output.outputs = new Array(); 
-          
-          for(var i = 0; i < this.layers[this.layers.length - 1].length; i++){
-               output.outputs[i] = this.layers[this.layers.length - 1][i].output;
-          }
-
-          console.table(output);
-     }
-
-     run(){
-          this.forward();
-          //this.output();
-     }
-}
-/*
-
-    // Output Layer
-    for(j=0;j<num_neurons[num_layers-1];j++)
-    {           
-
-        lay[num_layers-1][j].delta = (lay[num_layers-1][j].output - desired_outputs[p][j]) * (lay[num_layers-1][j].output) * (1- lay[num_layers-1][j].output);
-
-        for(k=0;k<num_neurons[num_layers-2];k++)
-        {   
-            lay[num_layers-2][k].dweights[j] = (lay[num_layers-1][j].delta * lay[num_layers-2][k].output);
-            lay[num_layers-2][k].doutput = lay[num_layers-2][k].weights[j] * lay[num_layers-1][j].delta;
-        }
-            
-        lay[num_layers-1][j].dbias = lay[num_layers-1][j].delta;           
+  constructor({
+    structure = [2, 3, 1],
+    learning_rate = 0.05,
+    activationFn = (x) => {
+      return 1 / (1 + Math.exp(-x));
+    },
+    derivativeFn = (x) => {
+      return activationFn(x) * (1 - activationFn(x));
+    },
+    weightInitFn = () => {
+      return Math.random();
+    },
+  } = {}) {
+    if (structure.length < 3) {
+      throw new Error(
+        "La estructura de la red neuronal debe tener al menos una capa oculta y una capa de salida"
+      );
+    }
+    if (structure.some((x) => x <= 0)) {
+      throw new Error(
+        "El número de nodos en cada capa de la red neuronal debe ser mayor que cero"
+      );
     }
 
-    // Hidden Layers
-    for(i=num_layers-2;i>0;i--)
-    {
-        for(j=0;j<num_neurons[i];j++)
-        {
-             lay[i][j].delta = lay[i][j].doutput;
-           
-            for(k=0;k<num_neurons[i-1];k++)
-            {
-                lay[i-1][k].dweights[j] = lay[i][j].delta * lay[i-1][k].output;    
-                
-                if(i>1)
-                {
-                    lay[i-1][k].doutput = lay[i-1][k].weights[j] * lay[i][j].delta;
-                }
-            }
+    this.layers = new Array();
+    this.learning_rate = learning_rate;
+    this.activationFn = activationFn;
+    this.derivativeFn = derivativeFn;
+    this.weightInitFn = weightInitFn;
 
-            lay[i][j].dbias = lay[i][j].delta;
+    var i, j, k;
+
+    for (i = 0; i < structure.length; i++) {
+      this.layers[i] = new Array();
+
+      for (j = 0; j < structure[i]; j++) {
+        this.layers[i][j] = new MedNode();
+        this.layers[i][j].weights = new Array();
+        this.layers[i][j].dweights = new Array();
+        if (i == 0) {
+          for (k = 0; k < structure[0]; k++) {
+            this.layers[i][j].weights[k] = weightInitFn();
+            this.layers[i][j].dweights[k] = weightInitFn();
+          }
+        } else {
+          for (k = 0; k < structure[i - 1]; k++) {
+            this.layers[i][j].weights[k] = weightInitFn();
+            this.layers[i][j].dweights[k] = weightInitFn();
+          }
         }
+      }
+    }
+  }
+
+  setData(dataset = [{ inputs: [0, 0], outputs: [0] }]) {
+    this.inputs = new Array();
+    this.targets = new Array();
+
+    dataset.forEach((item, index) => {
+      this.inputs[index] = item.inputs;
+      this.targets[index] = item.outputs;
+    });
+  }
+
+  sigmoid(x) {
+    return this.activationFn(x);
+  }
+
+  _sigmoid(x) {
+    return this.derivativeFn(x);
+  }
+
+  forward() {
+    for (let i = 0; i < this.inputs.length; i++) {
+      for (let j = 0; j < this.layers[0].length; j++) {
+        this.layers[0][j].sum = this.layers[0][j].bias;
+        for (let k = 0; k < this.layers[0][j].weights.length; k++) {
+          this.layers[0][j].sum +=
+            this.inputs[i][k] * this.layers[0][j].weights[k];
+          console.log(
+            `inputs[${i}][${k}]: ${this.inputs[i][k]} | layer[0][${j}]: ${this.layers[0][j].sum}`
+          );
+        }
+        this.layers[0][j].output = this.activationFn(this.layers[0][j].sum);
+      }
+
+      for (let j = 1; j < this.layers.length; j++) {
+        for (let k = 0; k < this.layers[j].length; k++) {
+          this.layers[j][k].sum = this.layers[j][k].bias;
+          for (let l = 0; l < this.layers[j - 1].length; l++) {
+            this.layers[j][k].sum +=
+              this.layers[j - 1][l].output * this.layers[j][k].weights[l];
+          }
+          this.layers[j][k].output = this.activationFn(this.layers[j][k].sum);
+        }
+      }
+    }
+  }
+
+  backward() {
+    var i, j, k, l, m, context, lc;
+    context = this;
+    lc = context.layers[context.layers.length - 1];
+
+    this.targets.forEach((item, r) => {
+      for (i = 0; i < lc.length; i++) {
+        let delta = lc[i].output - item[i];
+        lc[i].dsum = context.derivativeFn(lc[i].sum) * delta;
+      }
+
+      for (i = context.layers.length - 2; i >= 0; i--) {
+        for (j = 0; j < context.layers[i].length; j++) {
+          context.layers[i][j].doutput = 0;
+          for (k = 0; k < context.layers[i + 1].length; k++) {
+            for (l = 0; l < context.layers[i + 1][k].weights.length; l++) {
+              context.layers[i][j].doutput +=
+                context.layers[i + 1][k].dsum *
+                context.layers[i + 1][k].weights[l];
+            }
+          }
+          context.layers[i][j].dsum =
+            context.derivativeFn(context.layers[i][j].sum) *
+            context.layers[i][j].doutput;
+        }
+      }
+
+      for (i = 1; i < context.layers.length; i++) {
+        for (j = 0; j < context.layers[i].length; j++) {
+          for (k = 0; k < context.layers[i][j].weights.length; k++) {
+            context.layers[i][j].dweights[k] =
+              context.layers[i][j].dweights[k] +
+              context.layers[i - 1][k].output * context.layers[i][j].dsum;
+          }
+          context.layers[i][j].dbias =
+            context.layers[i][j].dbias + context.layers[i][j].dsum;
+        }
+      }
+    });
+
+    for (i = 1; i < context.layers.length; i++) {
+      for (j = 0; j < context.layers[i].length; j++) {
+        for (k = 0; k < context.layers[i][j].weights.length; k++) {
+          context.layers[i][j].weights[k] =
+            context.layers[i][j].weights[k] -
+            context.learning_rate * context.layers[i][j].dweights[k];
+          context.layers[i][j].dweights[k] = 0;
+        }
+        context.layers[i][j].bias =
+          context.layers[i][j].bias -
+          context.learning_rate * context.layers[i][j].dbias;
+        context.layers[i][j].dbias = 0;
+      }
+    }
+  }
+
+  update() {
+    var i, j, k;
+
+    for (i = 0; i < this.layers.length; i++) {
+      for (j = 0; j < this.layers[i].length; j++) {
+        for (k = 0; k < this.layers[i][j].weights.length; k++) {
+          this.layers[i][j].weights[k] =
+            this.layers[i][j].weights[k] -
+            this.learning_rate * this.layers[i][j].dweights[k];
+          this.layers[i][j].dweights[k] = 0;
+        }
+        this.layers[i][j].bias =
+          this.layers[i][j].bias - this.learning_rate * this.layers[i][j].dbias;
+        this.layers[i][j].doutput = 0;
+        this.layers[i][j].dsum = 0;
+      }
+    }
+  }
+
+  train(iterations = 1000) {
+    for (var o = 0; o < iterations; o++) {
+      var lastLayer = this.layers[this.layers.length - 1];
+      var i, j, k, l, m;
+
+      for (i = 0; i < this.inputs.length; i++) {
+
+        for (j = 0; j < this.layers[0].length; j++) {
+          this.layers[0][j].sum = this.layers[0][j].bias;
+          for (k = 0; k < this.layers[0][j].weights.length; k++) {
+            this.layers[0][j].sum +=
+              this.inputs[i][k] * this.layers[0][j].weights[k];
+            // console.log(`inputs[${i}][${k}]: ${this.inputs[i][k]} | sum layer[0] neuron[${j}]: ${ this.layers[0][j].sum}`);
+          }
+          this.layers[0][j].output = this.activationFn(this.layers[0][j].sum);
+        }
+
+        for (j = 1; j < this.layers.length; j++) {
+          for (k = 0; k < this.layers[j].length; k++) {
+            this.layers[j][k].sum = this.layers[j][k].bias;
+            for (l = 0; l < this.layers[j - 1].length; l++) {
+              this.layers[j][k].sum +=
+                this.layers[j - 1][l].output * this.layers[j][k].weights[l];
+            }
+            this.layers[j][k].output = this.activationFn(this.layers[j][k].sum);
+          }
+        }
+
+        for (j = 0; j < lastLayer.length; j++) {
+          let delta = lastLayer[j].output - this.targets[i][j];
+          lastLayer[j].dsum = this.derivativeFn(lastLayer[j].sum) * delta;
+        }
+
+        for (j = this.layers.length - 2; j >= 0; j--) {
+          for (m = 0; m < this.layers[j].length; m++) {
+            this.layers[j][m].doutput = 0;
+            for (k = 0; k < this.layers[j + 1].length; k++) {
+              for (l = 0; l < this.layers[j + 1][k].weights.length; l++) {
+                this.layers[j][m].doutput +=
+                  this.layers[j + 1][k].dsum * this.layers[j + 1][k].weights[l];
+              }
+            }
+            this.layers[j][m].dsum =
+              this.derivativeFn(this.layers[j][m].sum) *
+              this.layers[j][m].doutput;
+          }
+        }
+
+        for (l = 1; l < this.layers.length; l++) {
+          for (j = 0; j < this.layers[l].length; j++) {
+            for (k = 0; k < this.layers[l][j].weights.length; k++) {
+              this.layers[l][j].dweights[k] =
+                this.layers[l][j].dweights[k] +
+                this.layers[l - 1][k].output * this.layers[l][j].dsum;
+            }
+            this.layers[l][j].dbias =
+              this.layers[l][j].dbias + this.layers[l][j].dsum;
+          }
+        }
+
+        for (l = 1; l < this.layers.length; l++) {
+          for (j = 0; j < this.layers[l].length; j++) {
+            for (k = 0; k < this.layers[l][j].weights.length; k++) {
+              this.layers[l][j].weights[k] =
+                this.layers[l][j].weights[k] -
+                this.learning_rate * this.layers[l][j].dweights[k];
+              this.layers[l][j].dweights[k] = 0;
+            }
+            this.layers[l][j].bias =
+              this.layers[l][j].bias -
+              this.learning_rate * this.layers[l][j].dbias;
+            this.layers[l][j].dbias = 0;
+          }
+        }
+
+        // for (l = 0; l < this.layers.length; l++) {
+        //   for (j = 0; j < this.layers[l].length; j++) {
+        //     for (k = 0; k < this.layers[l][j].weights.length; k++) {
+        //       this.layers[l][j].weights[k] =
+        //         this.layers[l][j].weights[k] -
+        //         this.learning_rate * this.layers[l][j].dweights[k];
+        //       this.layers[l][j].dweights[k] = 0;
+        //     }
+        //     this.layers[l][j].bias =
+        //       this.layers[l][j].bias -
+        //       this.learning_rate * this.layers[l][j].dbias;
+        //     this.layers[l][j].doutput = 0;
+        //     this.layers[l][j].dsum = 0;
+        //   }
+        // }
+      }
+    }
+  }
+
+  output(inputs) {
+    if (inputs.length !== this.layers[0].length) {
+      throw new Error(
+        "El número de entradas debe coincidir con el número de nodos en la capa de entrada"
+      );
     }
 
+    var i, j, k, sum;
 
-for (var { input: [i1, i2, i3], output } of data) {
+    for (i = 0; i < inputs.length; i++) {
+      this.layers[0][i].output = inputs[i];
+    }
 
-     var h1_inputs =
-         pesos.i1_h1 * i1 +
-
- function iniciar() {
-
-         pesos.i2_h1 * i2 +
-         pesos.i3_h1 * i3 +
-         pesos.bias_h1;
-     var h1 = sigmoid(h1_inputs);
-     var h2_inputs =
-         pesos.i1_h2 * i1 +
-         pesos.i2_h2 * i2 +
-         pesos.i3_h2 * i3 +
-         pesos.bias_h2;
-     var h2 = sigmoid(h2_inputs);
-     var h3_inputs =
-         pesos.i1_h3 * i1 +
-         pesos.i2_h3 * i2 +
-         pesos.i3_h3 * i3 +
-         pesos.bias_h3;
-     var h3 = sigmoid(h3_inputs);
-     //sum
-     var o1_inputs =
-         pesos.h1_o1 * h1 +
-         pesos.h2_o1 * h2 +
-         pesos.h3_o1 * h3 +
-         pesos.bias_o1;
-         //output
-     var o1 = sigmoid(o1_inputs);
-     //dsum
-     var o1_delta =  output - o1 * sigmoid(x) * (1 - sigmoid(x));
-
-
-     weight_deltas.h1_o1 += h1 * o1_delta;
-     weight_deltas.h2_o1 += h2 * o1_delta;
-     weight_deltas.h3_o1 += h3 * o1_delta;
-     weight_deltas.bias_o1 += o1_delta;
-
-     var h1_delta = o1_delta * _sigmoid(h1_inputs);
-     var h2_delta = o1_delta * _sigmoid(h2_inputs);
-     var h3_delta = o1_delta * _sigmoid(h3_inputs);
-
-     weight_deltas.i1_h1 += i1 * h1_delta;
-     weight_deltas.i2_h1 += i2 * h1_delta;
-     weight_deltas.i3_h1 += i3 * h1_delta;
-     weight_deltas.bias_h1 += h1_delta;
-     
-     weight_deltas.i1_h2 += i1 * h2_delta;
-     weight_deltas.i2_h2 += i2 * h2_delta;
-     weight_deltas.i3_h2 += i3 * h2_delta;
-     weight_deltas.bias_h2 += h2_delta;
-
-     weight_deltas.i1_h3 += i1 * h3_delta;
-     weight_deltas.i2_h3 += i2 * h3_delta;
-     weight_deltas.i3_h3 += i3 * h3_delta;
-     weight_deltas.bias_h3 += h3_delta;
- }
-
- return weight_deltas;
-}
-
-void update_weights(void)
-{
-    int i,j,k;
-
-    for(i=0;i<num_layers-1;i++)
-    {
-        for(j=0;j<num_neurons[i];j++)
-        {
-            for(k=0;k<num_neurons[i+1];k++)
-            {
-                // Update Weights
-                lay[i].neu[j].out_weights[k] = (lay[i].neu[j].out_weights[k]) - (alpha * lay[i].neu[j].dw[k]);
-            }
-            
-            // Update Bias
-            lay[i].neu[j].bias = lay[i].neu[j].bias - (alpha * lay[i].neu[j].dbias);
+    for (i = 2; i < this.layers.length; i++) {
+      for (j = 0; j < this.layers[i].length; j++) {
+        sum = this.layers[i][j].bias;
+        for (k = 0; k < this.layers[i - 1].length; k++) {
+          sum += this.layers[i - 1][k].output * this.layers[i][j].weights[k];
         }
-    }   
+        this.layers[i][j].sum = sum;
+        this.layers[i][j].output = this.activationFn(sum);
+      }
+    }
+
+    var outputLayer = this.layers[this.layers.length - 1];
+    var output = new Array(outputLayer.length);
+    for (i = 0; i < outputLayer.length; i++) {
+      output[i] = outputLayer[i].output;
+    }
+    return output;
+  }
 }
 
-void update_weights(void)
-{
-    int i,j,k;
-
-    for(i=0;i<num_layers-1;i++)
-    {
-        for(j=0;j<num_neurons[i];j++)
-        {
-            for(k=0;k<num_neurons[i+1];k++)
-            {
-                // Update Weights
-                lay[i].neu[j].out_weights[k] = (lay[i].neu[j].out_weights[k]) - (alpha * lay[i].neu[j].dw[k]);
-            }
-            
-            // Update Bias
-            lay[i].neu[j].bias = lay[i].neu[j].bias - (alpha * lay[i].neu[j].dbias);
-        }
-    }   
-}
-*/
 function iniciar() {
-    
-    /*var net = new MedNet(2, 1, 1, {input: [1, 1, 1], output: 1});
-    net.train(1);
-    net.show();*/
+  // Crear la instancia de la red neuronal
+  const net = new MedNet({
+    structure: [2, 3, 1], // 2 nodos de entrada, 2 nodos ocultos y 1 nodo de salida
+    learning_rate: 0.1, // Tasa de aprendizaje
+  });
 
-     var net = new MedNet([2,3,2,1], 0.15);
-     net.setData([
-          {inputs: [0, 0], outputs: [1]}
-     ]);
-     net.train(100000);
-     net.run();
-     net.output();
-    
+  // Definir el dataset de entrenamiento
+  const trainingData = [
+    // { inputs: [0, 0], outputs: [0] },
+    { inputs: [0, 0], outputs: [0] },
+    { inputs: [1, 1], outputs: [1] },
+    // { inputs: [1, 1], outputs: [1] },
+  ];
+
+  // Entrenar la red neuronal
+  net.setData(trainingData); // Establecer el dataset de entrenamiento
+
+  net.train(1000000);
+
+  // Evaluar la red neuronal
+  //    console.log(net.output([0,0]));
+  console.log(net.output([1, 1]));
+  console.log(net.output([0, 0]));
+  //    console.log(net.output([1,1]));
 }
