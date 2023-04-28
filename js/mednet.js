@@ -110,18 +110,18 @@ class MedNet {
     
   }
 
-  backward(targets = [0]) {
+  backward(targets) {
     var i, j, k, l, m, context, lc;
     context = this;
     lc = context.layers[context.layers.length - 1];
-
-    targets.forEach((item) => {
+    
+  
+    for (j = 0; j < targets.length; j++) {
       for (i = 0; i < lc.length; i++) {
-        let delta = lc[i].output - item;
-        lc[i].dsum = context.derivativeFn(lc[i].sum) * delta;
+        let delta = lc[i].output - targets[j];
+        lc[i].dsum = context.derivativeFn(lc[i].output) * delta;
       }
-
-    });
+    }
 
       for (i = this.layers.length - 2; i >= 0; i--) {
         for (j = 0; j < this.layers[i].length; j++) {
@@ -131,29 +131,30 @@ class MedNet {
               this.layers[i][j].doutput += this.layers[i + 1][k].dsum * this.layers[i + 1][k].weights[l];
             }
           }
-          this.layers[i][j].dsum = this.derivativeFn(this.layers[i][j].sum) * this.layers[i][j].doutput;
+          this.layers[i][j].dsum = context.derivativeFn(this.layers[i][j].output) * this.layers[i][j].doutput;
         }
       }
 
       for (i = 1; i < this.layers.length; i++) {
         for (j = 0; j < this.layers[i].length; j++) {
           for (k = 0; k < this.layers[i][j].weights.length; k++) {
-            this.layers[i][j].dweights[k] =
-              this.layers[i][j].dweights[k] +
-              this.layers[i - 1][k].output * this.layers[i][j].dsum;
+            this.layers[i][j].dweights[k] = 0;
+            this.layers[i][j].dweights[k] += this.layers[i - 1][k].output * this.layers[i][j].dsum;
           }
-          this.layers[i][j].dbias = this.layers[i][j].dbias + this.layers[i][j].dsum;
+          this.layers[i][j].dbias = 0;
+          this.layers[i][j].dbias += this.layers[i][j].dsum;
         }
       }
-  
-
+    
+    
     for (i = 1; i < this.layers.length; i++) {
       for (j = 0; j < this.layers[i].length; j++) {
         for (k = 0; k < this.layers[i][j].weights.length; k++) {
-          this.layers[i][j].weights[k] = this.layers[i][j].weights[k] - this.learning_rate * this.layers[i][j].dweights[k];
+          this.layers[i][j].weights[k] -= context.learning_rate * this.layers[i][j].dweights[k];
           this.layers[i][j].dweights[k] = 0;
         }
-        this.layers[i][j].bias = this.layers[i][j].bias - this.learning_rate * this.layers[i][j].dbias;
+        this.layers[i][j].bias -= context.learning_rate * this.layers[i][j].dbias;
+        this.layers[i][j].dbias = 0;
       }
     }
   }
@@ -188,29 +189,32 @@ class MedNet {
 
 function iniciar() {
   // Crear la instancia de la red neuronal
-  const net = new MedNet({
-    structure: [3, 3, 1], // 2 nodos de entrada, 2 nodos ocultos y 1 nodo de salida
-    learning_rate: 0.091, // Tasa de aprendizaje
-  });
+  // const net = new MedNet({
+  //   structure: [3, 3, 1], // 2 nodos de entrada, 2 nodos ocultos y 1 nodo de salida
+  //   learning_rate: 0.314, // Tasa de aprendizaje
+  // });
 
-  // Definir el dataset de entrenamiento
-  const trainingData = [
-    { inputs: [0, 0, 0], outputs: [0] },
-    { inputs: [0, 0, 1], outputs: [0] },
-    { inputs: [0, 1, 1], outputs: [0] },
-    { inputs: [1, 1, 1], outputs: [1] },
-  ];
+  // // Definir el dataset de entrenamiento
+  // const trainingData = [
+  //   { inputs: [0, 0, 0], outputs: [0] },
+  //   { inputs: [0, 0, 1], outputs: [0] },
+  //   { inputs: [0, 1, 1], outputs: [1] },
+  //   { inputs: [1, 1, 1], outputs: [1] },
+  // ];
 
-  // Entrenar la red neuronal
-  net.setData(trainingData); // Establecer el dataset de entrenamiento
+  // // Entrenar la red neuronal
+  // net.setData(trainingData); // Establecer el dataset de entrenamiento
 
-  net.train(1000000);
+  // // net.train(1000000);
+  // // net.train(1000000);
+  // // net.train(1000000);
+  // // net.train(1000000);
 
-  // Evaluar la red neuronal
-  console.log("[0, 0, 0] = 0: " + net.output([0, 0, 0]));
-  console.log("[0, 0, 1] = 1: " + net.output([0, 0, 1]));
-  console.log("[0, 1, 1] = 1: " + net.output([0, 1, 1]));
-  console.log("[1, 1, 1] = 1: " + net.output([1, 1, 1]));
+  // // Evaluar la red neuronal
+  // console.log("[0, 0, 0] = 0: " + net.output([0, 0, 0]));
+  // console.log("[0, 0, 1] = 1: " + net.output([0, 0, 1]));
+  // console.log("[0, 1, 1] = 1: " + net.output([0, 1, 1]));
+  // console.log("[1, 1, 1] = 1: " + net.output([1, 1, 1]));
 
-  console.log(JSON.stringify(net));
+  // console.log(JSON.stringify(net));
 }
