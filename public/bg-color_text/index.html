@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <script src="../js/mednet.js"></script>
+    <style>
+        * {
+          margin: 0;
+          padding: 0;
+        }
+        canvas {
+          border: 1px solid black;
+        }
+
+        #div-autocolor {
+          width: 50%;
+          margin-left: 20%;
+          margin-top: -50px;
+          padding: 5rem;
+          text-align: center;
+          font-size: 5rem;
+          border: 1px solid black;
+        }
+
+        ul {
+          margin-top: 20px;
+          padding-left: 20px;
+        }
+
+        li {
+          list-style-type: none;
+        }
+      </style>
+</head>
+<body>
+    <ul>
+      <li>
+        <input type="range" name="red" id="red" min="0" max="255" onchange="actualiza()">
+        <label for="red">Rojo</label>
+      </li>
+      <li>
+        <input type="range" name="green" id="green" min="0" max="255" onchange="actualiza()">
+        <label for="green">Verde</label>
+      </li>
+      <li>
+        <input type="range" name="blue" id="blue" min="0" max="255" onchange="actualiza()">
+        <label for="blue">Azul</label>
+      </li>
+    </ul>
+  <div id="div-autocolor">
+    Texto de prueba.
+  </div>
+
+  <script type="text/javascript">
+		
+    const net = new MedNet({
+    structure: [3, 2, 1],
+    learning_rate: 0.7,
+  });
+
+  const trainingData = [
+    { inputs: [1, 1, 1], outputs: [0] },
+    { inputs: [0, 0, 1], outputs: [0] },
+    { inputs: [0, 1, 0], outputs: [0] },
+    { inputs: [1, 0, 0], outputs: [0] },
+    { inputs: [0, 0, 0], outputs: [1] },
+  ];
+
+  net.setData(trainingData);
+
+  net.train(100000);
+
+  // // Evaluar la red neuronal
+  console.log("[1, 1, 1] = 0: " + net.output([1, 1, 1]));
+  console.log("[0, 0, 1] = 0: " + net.output([0, 0, 1]));
+  console.log("[0, 1, 0] = 0: " + net.output([0, 1, 0]));
+  console.log("[1, 0, 0] = 0: " + net.output([1, 0, 0]));
+  console.log("[0, 0, 0] = 1: " + net.output([0, 0, 0]));
+
+  // console.log(JSON.stringify(net));
+  // '{"layers":[[{"bias":0.6826166351413052,"weights":[0.050203592062029845,0.93966162278959,0.3757848285202532],"output":0.8351090898120884,"sum":1.6222782579308952,"dbias":0,"dweights":[0.9914544074171636,0.057972909688090546,0.5772831426818048],"doutput":1976.1953303008931,"dsum":443.31223753167944},{"bias":0.42973573411458776,"weights":[0.2938133138174899,0.5568595512590342,0.7938637804500117],"output":0.7284149031706015,"sum":0.986595285373622,"dbias":0,"dweights":[0.723492575814233,0.29280203455276954,0.2769583198992771],"doutput":1976.1953303008931,"dsum":451.3542074882066},{"bias":0.7968879052724269,"weights":[0.697534825870237,0.6144128886161437,0.7515371187226325],"output":0.8039710319113624,"sum":1.4113007938885707,"dbias":0,"dweights":[0.9403055376144389,0.08002799446959252,0.40046998235143305],"doutput":1976.1953303008931,"dsum":439.7153790666278}],[{"bias":-1224.461553174918,"weights":[-86.76175576962878,527.5378266017373,1144.0859399473468],"output":0.9992245447700252,"sum":7.161284551492031,"dbias":0,"dweights":[0,0,0],"doutput":1.3168276371245722,"dsum":0.32920690928114305},{"bias":-714.2577230418179,"weights":[109.76180316369896,587.2903681809044,1103.6603951183854],"output":1,"sum":692.5073999089029,"dbias":0,"dweights":[0,0,0],"doutput":1.3168276371245722,"dsum":0.25890402748087465},{"bias":-714.1458132121369,"weights":[109.78662986617867,587.288120943796,1103.5166598025778],"output":1,"sum":692.5228467923223,"dbias":0,"dweights":[0,0,0],"doutput":1.3168276371245722,"dsum":0.25890402748087465},{"bias":-1224.728719804121,"weights":[-86.78095840198117,527.7914273823777,1144.2238870000008],"output":0.9992341159950446,"sum":7.173713651808612,"dbias":0,"dweights":[0,0,0],"doutput":1.3168276371245722,"dsum":0.32920690928114305}],[{"bias":-21.940733487595303,"weights":[105.6161331525111,-21.851054274037494,-20.95863552100876,107.77062543969355],"output":1,"sum":148.47189492851197,"dbias":0,"dweights":[0,0,0,0],"doutput":0.01545092740923511,"dsum":0.0038627318523087777},{"bias":-22.131831525590155,"weights":[105.21337157808038,-21.294336390621407,-21.118166188910156,107.52367617067628],"output":1,"sum":148.0287747206483,"dbias":0,"dweights":[0,0,0,0],"doutput":0.01545092740923511,"dsum":0.0038627318523087777}],[{"bias":5.513895987273897,"weights":[-10.111737030671636,-9.424879119779106],"output":8.128485939661318e-7,"sum":-14.022720163176846,"dbias":0,"dweights":[0,0],"doutput":0,"dsum":-0.00079087019421624}]],"learning_rate":0.27,"structure":[3,4,2,1],"inputs":[[1,1,1],[0,0,1],[0,1,0],[1,0,0],[0,0,0]],"targets":[[0],[0],[0],[0],[1]]}'
+
+    actualiza();
+
+		function actualiza() {
+
+      let red = document.getElementById("red").value;
+      let green = document.getElementById("green").value;
+      let blue = document.getElementById("blue").value;
+
+      console.log(red,green,blue);
+
+      var isBlackFont = net.output([red / 255, green / 255, blue / 255]);
+      console.log(`resultado: ${isBlackFont}`);
+      isBlackFont = isBlackFont >= 0.8 ? false : true;
+
+      console.log(`debe ser fuente oscura? ${isBlackFont ? "SI" : "NO"}`);
+      var div = document.getElementById("div-autocolor");
+
+      div.style.color = isBlackFont ? "black" : "white";
+      div.style.backgroundColor = `rgb(${red}, ${green}, ${blue})`;
+    }
+	</script>
+</body>
+</html>
